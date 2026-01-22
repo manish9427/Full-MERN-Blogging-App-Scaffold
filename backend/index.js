@@ -14,11 +14,7 @@ app.use("/auth", authRoutes);
 app.use("/blogs", blogRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-    app.listen(5000, () => console.log("Server running on port 5000"));
-  })
+  .then(() => console.log("MongoDB connected"))
   .catch(err => console.error(err));
 
 module.exports = app;
-
