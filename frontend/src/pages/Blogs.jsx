@@ -1,46 +1,45 @@
-import { useEffect, useState } from "react";
-import { getBlogs } from "../services/blogs";
+import { useState, useEffect } from "react";
+import { Container, TextField, Button, Typography } from "@mui/material";
+import BlogCard from "../components/BlogCard";
+import api from "../services/api";
 
 export default function Blogs() {
   const [blogs, setBlogs] = useState([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const res = await getBlogs(token);
-        setBlogs(res.data);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load blogs");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBlogs();
+    const token = localStorage.getItem("token");
+    api.get("/blogs", { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setBlogs(res.data))
+      .catch(err => console.error(err));
   }, []);
 
-  if (loading) return <div className="loading">Loading blogs...</div>;
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    try {
+      const res = await api.post("/blogs",
+        { title, content, author: "Manish" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setBlogs([...blogs, res.data]);
+      setTitle("");
+      setContent("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
-    <div className="blogs-container">
-      <h2>All Blogs</h2>
-      {error && <div className="error-message">{error}</div>}
-      {blogs.length === 0 ? (
-        <p>No blogs available yet.</p>
-      ) : (
-        <div className="blogs-grid">
-          {blogs.map((b) => (
-            <div key={b._id} className="blog-card">
-              <h3>{b.title}</h3>
-              <p>{b.content.substring(0, 150)}...</p>
-              <small>By {b.author}</small>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <Container sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>Blogs</Typography>
+      <form onSubmit={handleCreate}>
+        <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)} sx={{ mb: 2 }} />
+        <TextField fullWidth multiline rows={4} label="Content" value={content} onChange={(e) => setContent(e.target.value)} sx={{ mb: 2 }} />
+        <Button type="submit" variant="contained">Add Blog</Button>
+      </form>
+      {blogs.map(blog => <BlogCard key={blog._id} blog={blog} />)}
+    </Container>
   );
 }

@@ -1,70 +1,32 @@
 import { useState } from "react";
+import { TextField, Button, Container, Typography } from "@mui/material";
+import api from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { login } from "../services/auth";
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const validateForm = () => {
-    if (!form.email || !form.password) {
-      setError("Please fill in all fields");
-      return false;
-    }
-    if (!/\S+@\S+\.\S+/.test(form.email)) {
-      setError("Invalid email format");
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
-
-    if (!validateForm()) return;
-
     try {
-      setLoading(true);
-      const res = await login(form);
+      const res = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", res.data.token);
       navigate("/blogs");
-    } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
-    } finally {
-      setLoading(false);
+    } catch {
+      alert("Login failed!");
     }
   };
 
   return (
-    <div className="form-container">
-      <h2>Login</h2>
-      {error && <div className="error-message">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <input
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <input
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>Login</Typography>
+      <form onSubmit={handleLogin}>
+        <TextField fullWidth label="Email" margin="normal" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <TextField fullWidth label="Password" type="password" margin="normal" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>Login</Button>
       </form>
-    </div>
+    </Container>
   );
 }
